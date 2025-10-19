@@ -1,6 +1,9 @@
 [package]
 name = "minecraft_resource_tree"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 [dependencies]
+iced = {version = "0.13.1", features = ["advanced"]}
+more_iced_aw = {git = "https://github.com/RoxtroffJ/more_iced_aw.git"}
+replace_with = "0.1.8"
