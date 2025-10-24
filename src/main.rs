@@ -1,21 +1,34 @@
-use iced::{Element, Subscription, Task, keyboard, widget};
-use minecraft_resource_tree::ui::recipe;
+use iced::{
+    Border, Element,
+    Length::Fill,
+    Subscription, Task, keyboard,
+    widget::{self, Column, Container, Scrollable, button, center, container, text},
+};
+use iced_aw::ContextMenu;
+use minecraft_resource_tree::ui::{
+    SPACE,
+    recipe::{self, BuilderState},
+};
 
 struct App {
-    builder: recipe::EditableContent,
+    recipes: Vec<recipe::EditableContent>,
 }
 
 impl Default for App {
     fn default() -> Self {
-        Self { builder: recipe::EditableContent::Builder(Default::default()) }
+        Self {
+            recipes: Default::default(),
+        }
     }
 }
 
 #[derive(Debug, Clone)]
 enum Message {
-    Action(recipe::EditableAction),
-    Build,
-    Edit,
+    Action(usize, recipe::EditableAction),
+    Build(usize),
+    Edit(usize),
+    Delete(usize),
+    AddRecipe,
     FocusNext,
     FocusPrevious,
 }
@@ -23,9 +36,31 @@ enum Message {
 impl App {
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
-            Message::Action(editable_action) => self.builder.perform(editable_action),
-            Message::Build => self.builder.perform(recipe::EditableAction::Build),
-            Message::Edit => self.builder.perform(recipe::EditableAction::Edit),
+            Message::Action(index, editable_action) => self
+                .recipes
+                .get_mut(index)
+                .map(|reicpe| reicpe.perform(editable_action))
+                .unwrap_or_default(),
+            Message::Build(index) => self
+                .recipes
+                .get_mut(index)
+                .map(|recipe| recipe.perform(recipe::EditableAction::Build))
+                .unwrap_or_default(),
+            Message::Edit(index) => self
+                .recipes
+                .get_mut(index)
+                .map(|recipe| recipe.perform(recipe::EditableAction::Edit))
+                .unwrap_or_default(),
+            Message::Delete(index) => {
+                let recipes = &mut self.recipes;
+                if index < recipes.len() {
+                    recipes.remove(index);
+                }
+            }
+            Message::AddRecipe => {
+                let content = BuilderState::new();
+                self.recipes.push(recipe::EditableContent::Builder(content));
+            }
             Message::FocusNext => return widget::focus_next(),
             Message::FocusPrevious => return widget::focus_previous(),
         }
@@ -34,9 +69,59 @@ impl App {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        recipe::EditableWidget::new(&self.builder, Message::Action)
-            .build_button(Message::Build)
-            .edit_button(Message::Edit)
+        let recipes = self.recipes.iter().enumerate().map(|(index, recipe)| {
+            Container::new(ContextMenu::new(
+                recipe::EditableWidget::new(recipe, move |a| Message::Action(index, a))
+                    .build_button(Message::Build(index)),
+                move || {
+                    let mut res = Column::new();
+                    if self
+                        .recipes
+                        .get(index)
+                        .map(|recipe| match recipe {
+                            recipe::EditableContent::Builder(_) => false,
+                            recipe::EditableContent::Built(_) => true,
+                        })
+                        .unwrap_or(false)
+                    {
+                        res = res.push(button(text("Edit recipe")).on_press(Message::Edit(index)))
+                    };
+
+                    res.push(
+                        button(text("Delete recipe"))
+                            .on_press(Message::Delete(index))
+                            .style(button::danger),
+                    )
+                    .into()
+                },
+            ))
+            .style(|theme| {
+                container::transparent(theme).border(
+                    Border::default()
+                        .color(theme.palette().text)
+                        .rounded(SPACE)
+                        .width(1.),
+                )
+            })
+            .padding(SPACE)
+            .into()
+        });
+
+        let content = Scrollable::new(
+            Column::with_children(recipes)
+                .push(
+                    button("Add recipe")
+                        .on_press(Message::AddRecipe)
+                        .style(button::success)
+                        .width(Fill),
+                )
+                .spacing(SPACE),
+        );
+
+        Container::new(content)
+            .padding(SPACE)
+            .width(Fill)
+            .height(Fill)
             .into()
     }
 
@@ -62,37 +147,3 @@ fn main() -> iced::Result {
         .subscription(App::subscription)
         .run()
 }
-
-// type Item = String;
-
-// mod recipe_lookup;
-// mod ui;
-
-// use iced::{widget::text, Element};
-// use recipe_lookup::*;
-
-// #[derive(Debug, Default, Clone)]
-// struct App {
-//     recipes: RecipeBank<Item>
-// }
-
-// #[derive(Debug, Clone)]
-// enum Message {
-//     ToRecipeBank()
-// }
-
-// impl App {
-//     fn update(&mut self, message: Message) {
-//         match message {
-//             Message::ToRecipeBank() => (),
-//         }
-//     }
-
-//     fn view(&self) -> Element<'_, Message> {
-//         text("Hello world").into()
-//     }
-// }
-
-// fn main() -> iced::Result {
-//     iced::run("Resources Tree", App::update, App::view)
-// }

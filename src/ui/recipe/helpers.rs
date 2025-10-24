@@ -1,4 +1,4 @@
-use iced::{widget::{column, horizontal_rule, row, vertical_rule}, Element};
+use iced::{widget::{column, horizontal_rule, row, vertical_rule}, Element, Length};
 
 use crate::ui::{title_text, TitleLevel, SPACE};
 
@@ -6,6 +6,7 @@ use crate::ui::{title_text, TitleLevel, SPACE};
 pub fn layout<'a, Message: 'a>(
     ingredient_iter: impl Iterator<Item = Element<'a, Message>>,
     product_iter: impl Iterator<Item = Element<'a, Message>>,
+    height: Length
 ) -> Element<'a, Message> {
     let ingredient_col = column![
         title_text(TitleLevel::SectionTitle, "Ingredients"),
@@ -21,5 +22,5 @@ pub fn layout<'a, Message: 'a>(
         column(product_iter)
     ];
 
-    row![ingredient_col, vertical_rule(SPACE), products_col].into()
+    row![ingredient_col, vertical_rule(SPACE), products_col].height(height).into()
 }

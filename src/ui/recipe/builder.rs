@@ -5,6 +5,7 @@ use crate::{
 
 use iced::{
     Alignment, Element,
+    Length::{self},
     widget::{Button, button, column, horizontal_rule, row, text, text_input},
 };
 use more_iced_aw::{
@@ -144,11 +145,15 @@ impl BuilderState {
                 .unwrap_or_default(),
             BuilderAction::DelProd(index) => {
                 let products = &mut self.products;
-                if index < products.len() {self.products.remove(index);}
+                if index < products.len() {
+                    self.products.remove(index);
+                }
             }
             BuilderAction::DelIngr(index) => {
                 let ingredients = &mut self.ingredients;
-                if index < ingredients.len() {self.ingredients.remove(index);}
+                if index < ingredients.len() {
+                    self.ingredients.remove(index);
+                }
             }
         }
     }
@@ -159,6 +164,7 @@ pub struct Builder<'a, Message> {
     state: &'a BuilderState,
     on_action: Box<dyn Fn(BuilderAction) -> Message + 'a>,
     on_build: Option<Message>,
+    height: Length,
 }
 
 impl<'a, Message> Builder<'a, Message> {
@@ -169,6 +175,7 @@ impl<'a, Message> Builder<'a, Message> {
             state,
             on_action: Box::new(on_action),
             on_build: None,
+            height: Length::Shrink,
         }
     }
 
@@ -238,7 +245,7 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
         );
 
         let mut content = column![
-            Element::<'_, BuilderAction>::from(layout(ingredients, products)).map(value.on_action)
+            Element::<'_, BuilderAction>::from(layout(ingredients, products, value.height)).map(value.on_action)
         ];
 
         let has_invalid = ingredients_vec.iter().any(|(_, qty)| !qty.is_valid())

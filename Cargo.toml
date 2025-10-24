@@ -5,5 +5,6 @@ edition = "2024"
 
 [dependencies]
 iced = {version = "0.13.1", features = ["advanced"]}
+iced_aw = {version = "0.12.2"}
 more_iced_aw = {git = "https://github.com/RoxtroffJ/more_iced_aw.git"}
 replace_with = "0.1.8"
