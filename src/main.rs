@@ -1,25 +1,22 @@
+use std::collections::HashMap;
+
 use iced::{
-    Border, Element,
+    Element,
     Length::Fill,
     Subscription, Task, keyboard,
-    widget::{self, Column, Container, Scrollable, button, center, container, text},
+    widget::{self, Column, Container, Scrollable, button, column, horizontal_rule, row, text},
 };
 use iced_aw::ContextMenu;
 use minecraft_resource_tree::ui::{
-    SPACE,
+    Item, SPACE, TitleLevel, contoured,
     recipe::{self, BuilderState},
+    title_text,
 };
 
+#[derive(Default)]
 struct App {
     recipes: Vec<recipe::EditableContent>,
-}
-
-impl Default for App {
-    fn default() -> Self {
-        Self {
-            recipes: Default::default(),
-        }
-    }
+    known_items: HashMap<Item, usize>,
 }
 
 #[derive(Debug, Clone)]
@@ -29,8 +26,36 @@ enum Message {
     Edit(usize),
     Delete(usize),
     AddRecipe,
+
+    Compute,
+
     FocusNext,
     FocusPrevious,
+}
+
+macro_rules! remove_recipe_items {
+    ($app:expr, $recipe:expr) => {
+        match $recipe {
+            recipe::EditableContent::Builder(_) => (),
+            recipe::EditableContent::Built(recipe) => {
+                let inputs = recipe.get_ingredients().iter().map(|(item, _)| item);
+                let outputs = recipe.get_products().iter().map(|(item, _, _)| item);
+
+                for item in inputs.chain(outputs) {
+                    match $app.known_items.get_mut(item) {
+                        Some(qty) => {
+                            if *qty == 0 {
+                                $app.known_items.remove(item);
+                            } else {
+                                *qty -= 1
+                            }
+                        }
+                        None => (),
+                    }
+                }
+            }
+        }
+    };
 }
 
 impl App {
@@ -44,15 +69,38 @@ impl App {
             Message::Build(index) => self
                 .recipes
                 .get_mut(index)
-                .map(|recipe| recipe.perform(recipe::EditableAction::Build))
+                .map(|recipe| {
+                    recipe.perform(recipe::EditableAction::Build);
+                    match recipe {
+                        recipe::EditableContent::Builder(_) => (),
+                        recipe::EditableContent::Built(recipe) => {
+                            let inputs = recipe.get_ingredients().iter().map(|(item, _)| item);
+                            let outputs = recipe.get_products().iter().map(|(item, _, _)| item);
+
+                            for item in inputs.chain(outputs) {
+                                match self.known_items.get_mut(item) {
+                                    Some(qty) => *qty += 1,
+                                    None => {
+                                        self.known_items.insert(item.clone(), 0);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                })
                 .unwrap_or_default(),
-            Message::Edit(index) => self
+            Message::Edit(index) => {
+                self
                 .recipes
                 .get_mut(index)
-                .map(|recipe| recipe.perform(recipe::EditableAction::Edit))
-                .unwrap_or_default(),
+                .map(|recipe| {
+                    remove_recipe_items!(self, recipe);
+                    recipe.perform(recipe::EditableAction::Edit);
+                })
+                .unwrap_or_default()},
             Message::Delete(index) => {
                 let recipes = &mut self.recipes;
+                recipes.get_mut(index).map(|recipe| remove_recipe_items!(self, recipe));
                 if index < recipes.len() {
                     recipes.remove(index);
                 }
@@ -61,6 +109,9 @@ impl App {
                 let content = BuilderState::new();
                 self.recipes.push(recipe::EditableContent::Builder(content));
             }
+
+            Message::Compute => {}
+
             Message::FocusNext => return widget::focus_next(),
             Message::FocusPrevious => return widget::focus_previous(),
         }
@@ -70,55 +121,81 @@ impl App {
 
     fn view(&self) -> Element<'_, Message> {
         let recipes = self.recipes.iter().enumerate().map(|(index, recipe)| {
-            Container::new(ContextMenu::new(
-                recipe::EditableWidget::new(recipe, move |a| Message::Action(index, a))
-                    .build_button(Message::Build(index)),
-                move || {
-                    let mut res = Column::new();
-                    if self
-                        .recipes
-                        .get(index)
-                        .map(|recipe| match recipe {
-                            recipe::EditableContent::Builder(_) => false,
-                            recipe::EditableContent::Built(_) => true,
-                        })
-                        .unwrap_or(false)
-                    {
-                        res = res.push(button(text("Edit recipe")).on_press(Message::Edit(index)))
-                    };
+            contoured(
+                ContextMenu::new(
+                    recipe::EditableWidget::new(recipe, move |a| Message::Action(index, a))
+                        .build_button(Message::Build(index)),
+                    move || {
+                        let mut res = Column::new();
+                        if self
+                            .recipes
+                            .get(index)
+                            .map(|recipe| match recipe {
+                                recipe::EditableContent::Builder(_) => false,
+                                recipe::EditableContent::Built(_) => true,
+                            })
+                            .unwrap_or(false)
+                        {
+                            res =
+                                res.push(button(text("Edit recipe")).on_press(Message::Edit(index)))
+                        };
 
-                    res.push(
-                        button(text("Delete recipe"))
-                            .on_press(Message::Delete(index))
-                            .style(button::danger),
-                    )
-                    .into()
-                },
-            ))
-            .style(|theme| {
-                container::transparent(theme).border(
-                    Border::default()
-                        .color(theme.palette().text)
-                        .rounded(SPACE)
-                        .width(1.),
-                )
-            })
-            .padding(SPACE)
+                        res.push(
+                            button(text("Delete recipe"))
+                                .on_press(Message::Delete(index))
+                                .style(button::danger),
+                        )
+                        .into()
+                    },
+                ),
+                |theme: &iced::Theme| theme.palette().text,
+            )
             .into()
         });
 
-        let content = Scrollable::new(
+        let recipes = Scrollable::new(
             Column::with_children(recipes)
                 .push(
-                    button("Add recipe")
+                    button(title_text(TitleLevel::SectionTitle, "Add recipe"))
                         .on_press(Message::AddRecipe)
-                        .style(button::success)
+                        //.style(button::success)
                         .width(Fill),
                 )
                 .spacing(SPACE),
-        );
+        )
+        .height(Fill)
+        .spacing(SPACE);
 
-        Container::new(content)
+        let details = Column::with_children(self.known_items.keys().map(|item| item.displayer()));
+
+        let content = row![
+            column![
+                title_text(TitleLevel::SectionTitle, "Recipes"),
+                horizontal_rule(SPACE),
+                recipes
+            ],
+            column![
+                title_text(TitleLevel::SectionTitle, "Details"),
+                horizontal_rule(SPACE),
+                details
+            ],
+        ]
+        .spacing(SPACE);
+
+        let compute_button = button(title_text(TitleLevel::SectionTitle, "Compute"))
+            .width(Fill)
+            .on_press_maybe(
+                if self.recipes.iter().all(|recipe| match recipe {
+                    recipe::EditableContent::Builder(_) => false,
+                    recipe::EditableContent::Built(_) => true,
+                }) {
+                    Some(Message::Compute)
+                } else {
+                    None
+                },
+            );
+
+        Container::new(column![content, compute_button].spacing(SPACE))
             .padding(SPACE)
             .width(Fill)
             .height(Fill)

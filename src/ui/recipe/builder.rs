@@ -1,6 +1,6 @@
 use crate::{
-    recipe_lookup::Recipe,
-    ui::{ERROR_COLOR, Item, SPACE, TitleLevel, recipe::helpers::layout, title_text},
+    recipes::Recipe,
+    ui::{Item, SPACE, TitleLevel, recipe::helpers::layout, title_text},
 };
 
 use iced::{
@@ -10,7 +10,7 @@ use iced::{
 };
 use more_iced_aw::{
     helpers::filter_background,
-    parsed_input::{self, Parsed, ParsedInput, color_on_err},
+    parsed_input::{self, danger_on_err, Parsed, ParsedInput},
 };
 
 mod helpers;
@@ -207,7 +207,7 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
                     } else {
                         None
                     })
-                    .style(color_on_err(text_input::default, ERROR_COLOR))
+                    .style(danger_on_err(text_input::default))
                     .into()
             },
         );
@@ -228,7 +228,7 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
                         } else {
                             None
                         })
-                        .style(color_on_err(text_input::default, ERROR_COLOR)),
+                        .style(danger_on_err(text_input::default)),
                     text(" ("),
                     ParsedInput::new("Odds", proba)
                         .on_input_maybe(if !last {
@@ -236,7 +236,7 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
                         } else {
                             None
                         })
-                        .style(color_on_err(text_input::default, ERROR_COLOR)),
+                        .style(danger_on_err(text_input::default)),
                     text("%)"),
                 ]
                 .align_y(Alignment::Center)
@@ -263,7 +263,7 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
                         if has_invalid {
                             match style.background {
                                 Some(background) => button::Style {
-                                    background: Some(filter_background(background, ERROR_COLOR)),
+                                    background: Some(filter_background(background, theme.palette().danger)),
                                     ..style
                                 },
                                 None => style,

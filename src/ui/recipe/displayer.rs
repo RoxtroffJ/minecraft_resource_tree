@@ -5,7 +5,7 @@ use iced::{
 };
 
 use crate::{
-    recipe_lookup::Recipe,
+    recipes::Recipe,
     ui::{Item, SPACE, TitleLevel, recipe::helpers::layout, title_text},
 };
 

@@ -7,7 +7,7 @@ mod displayer;
 pub use displayer::*;
 use iced::Element;
 
-use crate::{recipe_lookup::Recipe, ui::Item};
+use crate::{recipes::Recipe, ui::Item};
 
 mod helpers;
 

@@ -1,21 +1,15 @@
 //! UI elements for the app.
 
 use iced::{
-    Alignment, Color, Element, Font,
-    Length::Fill,
-    advanced::{self, widget::Text},
-    color,
-    widget::{
-        self, TextInput,
-        text::{self, IntoFragment},
-        text_input,
-    },
+    advanced::{self, widget::Text}, widget::{
+        self, container, text::{self, IntoFragment}, text_input, Container, TextInput
+    }, Alignment, Border, Color, Element, Font, Length::Fill
 };
 
 pub mod recipe;
 
 /// A Minecraft item
-#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Item {
     name: String,
 }
@@ -23,7 +17,9 @@ pub struct Item {
 impl Item {
     /// Creates a new item.
     pub fn new(name: impl ToString) -> Self {
-        Self { name: name.to_string() }
+        Self {
+            name: name.to_string(),
+        }
     }
 
     /// [`Element`] that displays an item.
@@ -101,8 +97,45 @@ where
     }
 }
 
-/// Use this color for warnings.
-pub const ERROR_COLOR: Color = color!(0xff0000, 0.2);
+/// Provides a function that converts a theme into a color.
+pub trait ThemeColor<Theme> {
+    /// Converts a theme into a color.
+    fn get_color(&self, theme: &Theme) -> Color;
+} 
+
+impl<Theme> ThemeColor<Theme> for Color {
+    fn get_color(&self, _theme: &Theme) -> Color {
+        *self
+    }
+}
+
+impl<T: Fn(&Theme) -> Color, Theme> ThemeColor<Theme> for T {
+    fn get_color(&self, theme: &Theme) -> Color {
+        self(theme)
+    }
+}
+
+/// [Container] with a contour, and padding of [SPACE].
+pub fn contoured<'a, Message, Theme, Renderer>(
+    content: impl Into<Element<'a, Message, Theme, Renderer>>,
+    color: impl ThemeColor<Theme> + 'a,
+) -> Container<'a, Message, Theme, Renderer>
+where
+    Theme: container::Catalog + 'a,
+    Renderer: advanced::Renderer,
+    Theme::Class<'a>: From<container::StyleFn<'a, Theme>>,
+{
+    Container::new(content)
+        .style(move |theme| {
+            container::transparent(theme).border(
+                Border::default()
+                    .color(color.get_color(theme))
+                    .rounded(SPACE)
+                    .width(1.),
+            )
+        })
+        .padding(SPACE)
+}
 
 /// Use this space for separators, padding, ...
 pub const SPACE: u16 = 10;
