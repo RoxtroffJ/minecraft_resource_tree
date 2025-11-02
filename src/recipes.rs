@@ -5,14 +5,14 @@
 #[derive(Debug, Clone)]
 pub struct Recipe<T> {
     ingredients: Vec<(T, u8)>,
-    products: Vec<(T, u8, f32)>, // Item, nb produced, proba of success.
+    products: Vec<(T, u8, f64)>, // Item, nb produced, proba of success.
 }
 
 impl<T> Recipe<T> {
     /// Creates a new recipe from an (ingerdient, quantity, probability of success) and a (product, quantity) list.
     /// 
     /// The probability should be between 0 and 1.
-    pub fn new(ingredients: Vec<(T, u8)>, products: Vec<(T, u8, f32)>) -> Self {
+    pub fn new(ingredients: Vec<(T, u8)>, products: Vec<(T, u8, f64)>) -> Self {
         Self {
             ingredients,
             products,
@@ -25,7 +25,7 @@ impl<T> Recipe<T> {
     }
 
     /// Retrieves the products of the recipe.
-    pub fn get_products(&self) -> &Vec<(T, u8, f32)> {
+    pub fn get_products(&self) -> &Vec<(T, u8, f64)> {
         &self.products
     }
 
@@ -35,14 +35,14 @@ impl<T> Recipe<T> {
     }
 
     /// Same as [get_products](Self::get_products) but mutable.
-    pub fn get_mut_products(&mut self) -> &mut Vec<(T, u8, f32)> {
+    pub fn get_mut_products(&mut self) -> &mut Vec<(T, u8, f64)> {
         &mut self.products
     }
 
     /// Deconstructs the [`Recipe`] and returns two vectors:
     /// * The first contains the ingreditents (item, quantity)
     /// * The second contains products (item, quantity, probability of success).
-    pub fn take(self) -> (Vec<(T, u8)>, Vec<(T, u8, f32)>) {
+    pub fn take(self) -> (Vec<(T, u8)>, Vec<(T, u8, f64)>) {
         (self.ingredients, self.products)
     }
 }

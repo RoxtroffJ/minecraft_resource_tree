@@ -102,7 +102,7 @@ impl BuilderState {
                 .collect(),
             self.products
                 .into_iter()
-                .map(|(item, qty, proba)| (item, **qty, **proba as f32 / 100.0))
+                .map(|(item, qty, proba)| (item, **qty, **proba as f64 / 100.0))
                 .collect(),
         )
     }
