@@ -33,9 +33,11 @@ impl Item {
     pub fn builder<'a, Message: Clone + 'a>(
         &'a self,
         on_build: impl Fn(Self) -> Message + 'a,
+        on_submit: Option<Message>
     ) -> Element<'a, Message> {
         title_text_input(TitleLevel::Bald, "Item", &self.name)
             .on_input(move |name| on_build(Self::new(name)))
+            .on_submit_maybe(on_submit)
             .into()
     }
 

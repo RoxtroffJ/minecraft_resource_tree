@@ -10,7 +10,7 @@ use iced::{
 };
 use more_iced_aw::{
     helpers::filter_background,
-    parsed_input::{self, danger_on_err, Parsed, ParsedInput},
+    parsed_input::{self, Parsed, ParsedInput, danger_on_err},
 };
 
 mod helpers;
@@ -53,6 +53,8 @@ pub enum BuilderAction {
     DelProd(usize),
     /// Deletes the given ingredient line.
     DelIngr(usize),
+    /// Enter was pressed. If the [`Builder`] has a build button, this variant will not be constructed.
+    Sumbit,
 }
 
 impl BuilderState {
@@ -155,6 +157,7 @@ impl BuilderState {
                     self.ingredients.remove(index);
                 }
             }
+            BuilderAction::Sumbit => {}
         }
     }
 }
@@ -208,6 +211,7 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
                         None
                     })
                     .style(danger_on_err(text_input::default))
+                    .on_submit(BuilderAction::Sumbit)
                     .into()
             },
         );
@@ -228,7 +232,8 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
                         } else {
                             None
                         })
-                        .style(danger_on_err(text_input::default)),
+                        .style(danger_on_err(text_input::default))
+                        .on_submit(BuilderAction::Sumbit),
                     text(" ("),
                     ParsedInput::new("Odds", proba)
                         .on_input_maybe(if !last {
@@ -236,7 +241,8 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
                         } else {
                             None
                         })
-                        .style(danger_on_err(text_input::default)),
+                        .style(danger_on_err(text_input::default))
+                        .on_submit(BuilderAction::Sumbit),
                     text("%)"),
                 ]
                 .align_y(Alignment::Center)
@@ -244,9 +250,21 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
             },
         );
 
-        let mut content = column![
-            Element::<'_, BuilderAction>::from(layout(ingredients, products, value.height)).map(value.on_action)
-        ];
+        let on_build2 = value.on_build.as_ref().cloned();
+        let mut content = column![{
+            let elt =
+                Element::<'_, BuilderAction>::from(layout(ingredients, products, value.height));
+            if let Some(on_build) =  on_build2 {
+                
+                elt.map(move |action| match action {
+                    BuilderAction::Sumbit => on_build.clone(),
+
+                    _ => (value.on_action)(action),
+                })
+            } else {
+                elt.map(value.on_action)
+            }
+        }];
 
         let has_invalid = ingredients_vec.iter().any(|(_, qty)| !qty.is_valid())
             || products_vec
@@ -257,13 +275,16 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
             content = content.push(horizontal_rule(SPACE));
             content = content.push(
                 Button::new(title_text(TitleLevel::SectionTitle, "Build"))
-                    .on_press_maybe(if has_invalid { None } else { Some(on_build) })
+                    .on_press_maybe(if has_invalid { None } else { Some(on_build.clone()) })
                     .style(move |theme, status| {
                         let style = button::success(theme, status);
                         if has_invalid {
                             match style.background {
                                 Some(background) => button::Style {
-                                    background: Some(filter_background(background, theme.palette().danger)),
+                                    background: Some(filter_background(
+                                        background,
+                                        theme.palette().danger,
+                                    )),
                                     ..style
                                 },
                                 None => style,

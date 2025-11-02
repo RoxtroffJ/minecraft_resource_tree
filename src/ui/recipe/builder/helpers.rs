@@ -35,7 +35,7 @@ pub fn recipe_column_iter<'a, T, U: Copy, V: Copy + 'a>(
                     } else {
                         add_row(i, y)
                     }
-                }),
+                }, Some(BuilderAction::Sumbit)),
                 horizontal_space().width(Fixed(SPACE as _)),
                 row_builder(index, last, x)
             ]
