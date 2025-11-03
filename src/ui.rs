@@ -3,15 +3,16 @@
 use std::{fmt::Display, num::ParseFloatError, ops::{Deref, DerefMut}, str::FromStr};
 
 use iced::{
-    Alignment, Border, Color, Element, Font, Length::{Fill, Shrink}, advanced::{self, widget::Text}, widget::{
+    Alignment, Border, Color, Element, Font, Length::{Fill, Shrink}, advanced::{self, widget::Text}, color, widget::{
         self, Container, TextInput, container, text::{self, IntoFragment}, text_input
     }
 };
+use serde::{Deserialize, Serialize};
 
 pub mod recipe;
 
 /// A Minecraft item
-#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Item {
     name: String,
 }
@@ -152,7 +153,7 @@ where
 }
 
 /// Positive float
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct TargetAmount {
     amount: f64
 }
@@ -271,3 +272,6 @@ impl Display for DisplayFloat {
 
 /// Use this space for separators, padding, ...
 pub const SPACE: u16 = 10;
+
+/// Use this color to gray out some areas
+pub const GRAY: Color = color!(0x7f7f7f, 0.2);

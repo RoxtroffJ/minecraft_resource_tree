@@ -1,6 +1,8 @@
+//! Everything to do with the [`Builder`]
+
 use crate::{
     recipes::Recipe,
-    ui::{Item, SPACE, TitleLevel, recipe::helpers::layout, title_text},
+    ui::{Item, SPACE, TitleLevel, recipe::layout_helpers::layout, title_text},
 };
 
 use iced::{
@@ -13,11 +15,12 @@ use more_iced_aw::{
     parsed_input::{self, Parsed, ParsedInput, danger_on_err},
 };
 
-mod helpers;
+pub mod helpers;
 use helpers::*;
+use serde::{Deserialize, Serialize};
 
 /// The state of a recipe builder widget.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct BuilderState {
     products: Vec<(
         Item,
@@ -160,6 +163,24 @@ impl BuilderState {
             BuilderAction::Sumbit => {}
         }
     }
+
+    /// Converts this content into it's saved version.
+    ///
+    /// The errors will be lost, and not saved.
+    pub fn save(self) -> BuilderSave {
+        BuilderSave {
+            products: self
+                .products
+                .into_iter()
+                .map(|(i, q, p)| (i, q.into_value(), p.into_value()))
+                .collect(),
+            ingredients: self
+                .ingredients
+                .into_iter()
+                .map(|(i, q)| (i, q.into_value()))
+                .collect(),
+        }
+    }
 }
 
 /// Displays a [`BuilderState`]
@@ -254,8 +275,7 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
         let mut content = column![{
             let elt =
                 Element::<'_, BuilderAction>::from(layout(ingredients, products, value.height));
-            if let Some(on_build) =  on_build2 {
-                
+            if let Some(on_build) = on_build2 {
                 elt.map(move |action| match action {
                     BuilderAction::Sumbit => on_build.clone(),
 
@@ -275,7 +295,11 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
             content = content.push(horizontal_rule(SPACE));
             content = content.push(
                 Button::new(title_text(TitleLevel::SectionTitle, "Build"))
-                    .on_press_maybe(if has_invalid { None } else { Some(on_build.clone()) })
+                    .on_press_maybe(if has_invalid {
+                        None
+                    } else {
+                        Some(on_build.clone())
+                    })
                     .style(move |theme, status| {
                         let style = button::success(theme, status);
                         if has_invalid {
@@ -297,5 +321,37 @@ impl<'a, Message: Clone + 'a> From<Builder<'a, Message>> for Element<'a, Message
         }
 
         content.into()
+    }
+}
+
+/// A serde compatible version of [`BuilderState`].
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BuilderSave {
+    products: Vec<(Item, Quantity, Probability)>,
+    ingredients: Vec<(Item, Quantity)>,
+}
+
+impl From<BuilderSave> for BuilderState {
+    fn from(value: BuilderSave) -> Self {
+        BuilderState {
+            products: value
+                .products
+                .into_iter()
+                .map(|(i, q, p)| {
+                    (
+                        i,
+                        parsed_input::Content::new(q),
+                        parsed_input::Content::new(p),
+                    )
+                })
+                .collect(),
+            ingredients: value
+                .ingredients
+                .into_iter()
+                .map(|(i, q)| (i, parsed_input::Content::new(q)))
+                .collect(),
+            empty_qty: Default::default(),
+            empty_proba: Default::default(),
+        }
     }
 }

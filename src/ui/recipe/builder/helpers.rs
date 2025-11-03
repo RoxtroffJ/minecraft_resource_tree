@@ -1,3 +1,5 @@
+//! Helpers for the [`Builder`](super::Builder).
+
 use std::{fmt::Display, iter, num::ParseIntError, ops::Deref, str::FromStr, sync::LazyLock};
 
 use iced::{
@@ -5,12 +7,13 @@ use iced::{
     Length::*,
     widget::{horizontal_space, row},
 };
+use serde::{Deserialize, Serialize};
 
 use crate::ui::{recipe::BuilderAction, Item, SPACE};
 
 static EMPTY_ITEM: LazyLock<Item> = LazyLock::new(|| Item::new(""));
 
-pub fn recipe_column_iter<'a, T, U: Copy, V: Copy + 'a>(
+pub(crate) fn recipe_column_iter<'a, T, U: Copy, V: Copy + 'a>(
     vec: &'a Vec<T>,
     item_sep: impl Fn(&'a T) -> (&'a Item, U) + 'a,
     parsed_deref: impl Fn(U) -> V,
@@ -46,7 +49,7 @@ pub fn recipe_column_iter<'a, T, U: Copy, V: Copy + 'a>(
 
 /// An item quatity.
 /// It's a positive integer that won't accept 0 when parsed.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Quantity {
     n: u8,
 }
@@ -95,8 +98,11 @@ impl Deref for Quantity {
 }
 
 #[derive(Debug, Clone)]
+/// Non zero [`ParseIntError`].
 pub enum ParseQuantityError {
+    /// Standard [`ParseIntError`]
     Parse(ParseIntError),
+    /// Got 0
     Zero,
 }
 
@@ -111,7 +117,7 @@ impl Display for ParseQuantityError {
 
 /// A probability.
 /// It's an integer between 0 and 100 (%).
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Probability {
     p: u8,
 }
@@ -161,7 +167,9 @@ impl Deref for Probability {
 /// A proba parse error.
 #[derive(Debug, Clone)]
 pub enum ParseProbaError {
+    /// Standard [`ParseIntError`].
     Parse(ParseIntError),
+    /// Not a non zero percentage
     Range,
 }
 

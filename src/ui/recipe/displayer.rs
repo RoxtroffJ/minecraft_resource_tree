@@ -1,3 +1,5 @@
+//! Everything to do with [`RecipeWidget`].
+
 use iced::{
     Element,
     Length::{self, Shrink},
@@ -6,7 +8,7 @@ use iced::{
 
 use crate::{
     recipes::Recipe,
-    ui::{Item, SPACE, TitleLevel, recipe::helpers::layout, title_text},
+    ui::{Item, SPACE, TitleLevel, recipe::layout_helpers::layout, title_text},
 };
 
 /// A widget that displays a recipe

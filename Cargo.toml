@@ -1,6 +1,6 @@
 [package]
-name = "minecraft_resource_tree"
-version = "0.1.2"
+name = "craft_tree_optimizer"
+version = "1.0.0"
 edition = "2024"
 
 [dependencies]
@@ -8,12 +8,14 @@ iced = {version = "0.13.1", features = ["advanced", "debug"]}
 iced_aw = {version = "0.12.2"}
 more_iced_aw = {git = "https://github.com/RoxtroffJ/more_iced_aw.git"}
 replace_with = "0.1.8"
-#indexmap = "2.12"
 good_lp = {version = "1", features = ["clarabel"], default-features = false}
+serde = {version = "1", features = ["derive"]}
+rmp-serde = "1"
+rfd = "0.15"
 
 [package.metadata.packager]
 before-packaging-command = "cargo build --release"
-product-name = "Minecraft Resource Tree"
-identifier = "com.roxtroffj.minecraft_resource_tree"
+product-name = "Craft Tree Optimizer"
+identifier = "com.roxtroffj.craft_tree_optimizer"
 resources = ["Cargo.toml", "src", "32x32.png"]
 icons = ["128x128.png","64x64.png","32x32.png"]

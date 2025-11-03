@@ -1,8 +1,10 @@
 //! Everything about [Recipe]s.
 
+use serde::{Deserialize, Serialize};
+
 
 /// A recipe with ingredients that produces stuff.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Recipe<T> {
     ingredients: Vec<(T, u8)>,
     products: Vec<(T, u8, f64)>, // Item, nb produced, proba of success.

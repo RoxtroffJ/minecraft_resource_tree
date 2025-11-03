@@ -1,17 +1,19 @@
 //! UI structs to build and display a [Recipe].
 
-mod builder;
+pub mod builder;
 pub use builder::*;
 
-mod displayer;
+pub mod displayer;
 pub use displayer::*;
 use iced::Element;
+use serde::{Deserialize, Serialize};
 
 use crate::{recipes::Recipe, ui::Item};
 
-mod helpers;
+mod layout_helpers;
 
 /// Content of an editable [`Recipe`] widget.
+#[derive(Debug, Clone)]
 pub enum EditableContent {
     /// The recipe is in edit, with this state.
     Builder(BuilderState),
@@ -49,12 +51,27 @@ impl EditableContent {
                 }
             },
             EditableAction::BuilderAction(builder_action) => match val {
-                EditableContent::Builder(mut builder_state) => {builder_state.perform(builder_action); EditableContent::Builder(builder_state)},
+                EditableContent::Builder(mut builder_state) => {
+                    builder_state.perform(builder_action);
+                    EditableContent::Builder(builder_state)
+                }
                 EditableContent::Built(_) => val,
             },
         };
 
         replace_with::replace_with_or_abort(self, performer);
+    }
+
+    /// Converts to a [`EditableContentSave`].
+    ///
+    /// Parsing errors are lost in the process.
+    pub fn save(self) -> EditableContentSave {
+        match self {
+            EditableContent::Builder(builder_state) => {
+                EditableContentSave::Builder(builder_state.save())
+            }
+            EditableContent::Built(recipe) => EditableContentSave::Built(recipe),
+        }
     }
 }
 
@@ -71,7 +88,9 @@ impl<'a, Message> EditableWidget<'a, Message> {
     ) -> Self {
         match content {
             EditableContent::Builder(builder_state) => Self {
-                content: Err(Builder::new(builder_state, move |action| on_action(EditableAction::BuilderAction(action)))),
+                content: Err(Builder::new(builder_state, move |action| {
+                    on_action(EditableAction::BuilderAction(action))
+                })),
             },
             EditableContent::Built(recipe) => Self {
                 content: Ok(RecipeWidget::new(recipe)),
@@ -97,6 +116,24 @@ impl<'a, Message: Clone + 'a> From<EditableWidget<'a, Message>> for Element<'a, 
         match value.content {
             Ok(display) => display.into(),
             Err(builder) => builder.into(),
+        }
+    }
+}
+
+/// A serde compatible version of [`EditableContent`].
+#[derive(Serialize, Deserialize, Clone)]
+pub enum EditableContentSave {
+    /// Builder variant.
+    Builder(BuilderSave),
+    /// Built variant.
+    Built(Recipe<Item>),
+}
+
+impl From<EditableContentSave> for EditableContent {
+    fn from(value: EditableContentSave) -> Self {
+        match value {
+            EditableContentSave::Builder(builder_save) => EditableContent::Builder(builder_save.into()),
+            EditableContentSave::Built(recipe) => EditableContent::Built(recipe),
         }
     }
 }
