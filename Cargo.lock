@@ -766,7 +766,7 @@ dependencies = [
 
 [[package]]
 name = "craft_tree_optimizer"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "good_lp",
  "iced",

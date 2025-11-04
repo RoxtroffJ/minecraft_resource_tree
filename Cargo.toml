@@ -1,15 +1,15 @@
 [package]
 name = "craft_tree_optimizer"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 
 [dependencies]
-iced = {version = "0.13.1", features = ["advanced", "debug"]}
-iced_aw = {version = "0.12.2"}
-more_iced_aw = {git = "https://github.com/RoxtroffJ/more_iced_aw.git"}
+iced = { version = "0.13.1", features = ["advanced", "debug"] }
+iced_aw = { version = "0.12.2" }
+more_iced_aw = { git = "https://github.com/RoxtroffJ/more_iced_aw.git" }
 replace_with = "0.1.8"
-good_lp = {version = "1", features = ["clarabel"], default-features = false}
-serde = {version = "1", features = ["derive"]}
+good_lp = { version = "1", features = ["clarabel"], default-features = false }
+serde = { version = "1", features = ["derive"] }
 rmp-serde = "1"
 rfd = "0.15"
 
@@ -17,5 +17,8 @@ rfd = "0.15"
 before-packaging-command = "cargo build --release"
 product-name = "Craft Tree Optimizer"
 identifier = "com.roxtroffj.craft_tree_optimizer"
-resources = ["Cargo.toml", "src", "32x32.png"]
-icons = ["128x128.png","64x64.png","32x32.png"]
+# resources = ["32x32.png"]
+icons = ["128x128.png", "64x64.png", "32x32.png"]
+description = "App to help with crafting trees and resources management."
+long-description = "You enter recipes with the form x and y of these produce a and b of those, and then assign costs to raw materials, and a production goal.\nThe app will then compute the optimal chain of recipes to produce the goal."
+version = "1.0.1"

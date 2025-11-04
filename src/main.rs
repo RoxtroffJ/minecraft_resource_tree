@@ -6,6 +6,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use craft_tree_optimizer::ui::{
+    DisplayFloat, GRAY, Item, ParseTargetAmountError, SPACE, TargetAmount, TitleLevel, contoured,
+    recipe::{self, BuilderState, EditableContentSave},
+    title_text,
+};
 use good_lp::{Expression, ProblemVariables, Solution, SolverModel, solvers, variable};
 use iced::{
     Element,
@@ -18,11 +23,6 @@ use iced::{
     window,
 };
 use iced_aw::{ContextMenu, TypedInput};
-use craft_tree_optimizer::ui::{
-    DisplayFloat, GRAY, Item, ParseTargetAmountError, SPACE, TargetAmount, TitleLevel, contoured,
-    recipe::{self, BuilderState, EditableContentSave},
-    title_text,
-};
 use more_iced_aw::{
     element_vec,
     grid::{self, Grid},
@@ -894,7 +894,13 @@ impl App {
             None => App::default(),
         };
 
-        (app, Task::none())
+        (
+            app,
+            window::get_latest().then(|id| {
+                let Some(id) = id else { return Task::none() };
+                window::maximize(id, true)
+            }),
+        )
     }
 
     fn title(&self) -> String {
