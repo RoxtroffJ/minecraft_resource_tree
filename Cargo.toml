@@ -22,3 +22,4 @@ icons = ["128x128.png", "64x64.png", "32x32.png"]
 description = "App to help with crafting trees and resources management."
 long-description = "You enter recipes with the form x and y of these produce a and b of those, and then assign costs to raw materials, and a production goal.\nThe app will then compute the optimal chain of recipes to produce the goal."
 version = "1.0.1"
+outDir = "./target/dist"  
