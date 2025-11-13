@@ -584,6 +584,12 @@ impl App {
                     row
                 },
             ];
+            
+            let mut total_required = 0.;
+            let mut total_cost = 0.;
+            let mut total_used = 0.;
+            let mut total_produced = 0.;
+
             raws_rows.extend(raws.into_iter().map(|(item, cost)| {
                 let mut row = element_vec![
                     item.displayer(),
@@ -592,15 +598,24 @@ impl App {
                         .style(parsed_input::danger_on_err(text_input::default))
                 ];
                 if let Some((prod, uses)) = self.item_stats.as_ref().and_then(|tbl| tbl.get(item)) {
+                    let cost_items = ***cost * (uses - prod);
+
+                    total_required += uses - prod;
+                    total_cost += cost_items;
+                    total_used += *uses;
+                    total_produced += *prod;
+                    
                     row.extend(element_vec![
                         scale_field("Net required", uses - prod),
-                        scale_field("Cost", ***cost * (uses - prod)),
+                        scale_field("Cost", cost_items),
                         scale_field("Used", *uses),
                         scale_field("Produced", *prod)
                     ]);
                 }
                 row
             }));
+
+
 
             let mut all_rows = vec![
                 {
@@ -641,6 +656,11 @@ impl App {
                     row
                 },
             ];
+
+            let mut total_uses = 0.;
+            let mut total_prod = 0.;
+            let mut total_net = 0.;
+
             all_rows.extend(all.iter().map(|(item, (_, target, raw))| {
                 let mut row = element_vec![
                     item.displayer(),
@@ -650,6 +670,10 @@ impl App {
                         .on_toggle(|v| Message::ToggleRaw((*item).clone(), v))
                 ];
                 if let Some((prod, uses)) = self.item_stats.as_ref().and_then(|tbl| tbl.get(item)) {
+                    total_uses += *uses;
+                    total_prod += *prod;
+                    total_net += prod - uses;
+                    
                     row.extend(element_vec![
                         scale_field("Uses", *uses),
                         scale_field("Produced", *prod),
@@ -658,6 +682,28 @@ impl App {
                 }
                 row
             }));
+
+            if self.item_stats.is_some() {
+                raws_rows.push(element_vec!(Space::new(Shrink, SPACE)));
+                raws_rows.push(element_vec![
+                    Space::new(Shrink, Shrink),
+                    "Totals:",
+                    scale_field("Required total", total_required),
+                    scale_field("Cost total", total_cost),
+                    scale_field("Used total", total_used),
+                    scale_field("Produced total", total_produced)
+                ]);
+                
+                all_rows.push(element_vec!(Space::new(Shrink, SPACE)));
+                all_rows.push(element_vec![
+                    Space::new(Shrink, Shrink),
+                    Space::new(Shrink, Shrink),
+                    "Totals:",
+                    scale_field("Uses total", total_uses),
+                    scale_field("Produced total", total_prod),
+                    scale_field("Net production total", total_net)
+                ]);
+            }
 
             let raws_elt = Grid::with_rows(raws_rows)
                 .column_spacing(SPACE)
